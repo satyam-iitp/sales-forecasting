@@ -156,25 +156,6 @@ Every 1% improvement in MAPE translates to approximately **$1.8M in annual savin
 
 ---
 
-## How to Run
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/your-username/walmart-demand-forecasting.git
-cd walmart-demand-forecasting
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Add the data file
-# Place walmart_sales.csv inside the data/ folder
-
-# 4. Run notebooks in order
-jupyter notebook notebooks/01_data_understanding.ipynb
-```
-
----
-
 ## Tech Stack
 
 | Library | Purpose |
