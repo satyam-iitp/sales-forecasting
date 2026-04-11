@@ -77,13 +77,13 @@ walmart-demand-forecasting/
 
 ## Methodology
 
-### Step 1 — Understand the Data
+### 1. Understand the Data
 Inspect shape, data types, null values. Define what one row means, what we're predicting, and what might influence it.
 
-### Step 2 — Exploratory Analysis
+### 2. Exploratory Analysis
 Visualise sales trends over time, compare holiday vs non-holiday weeks, look at how each store behaves, and check whether economic factors (CPI, fuel price, unemployment) correlate with sales.
 
-### Step 3 — Forecasting Models
+### 3. Forecasting Models
 Three models are built in order of sophistication:
 
 | # | Model | Idea |
@@ -94,7 +94,7 @@ Three models are built in order of sophistication:
 
 **Train/test split:** 80% of each store's history for training, the final 20% for testing — applied independently per store (see bug note below).
 
-### Step 4 — Cost Analysis
+### 4. Cost Analysis
 Errors aren't just accuracy numbers — they cost money. We modelled two cost types:
 - **Overstock** (predicted > actual): 10% of the excess (storage + spoilage)
 - **Stockout** (predicted < actual): 20% of the gap (lost sales + customer churn)
@@ -120,24 +120,6 @@ Prophet is **~10× more accurate** than the naive baseline and reduces total inv
 **The bug:** The original code did a single global 80/20 split on the full dataset. Because rows were ordered by store number first, stores 1–36 landed entirely in training and stores 37–45 landed entirely in testing. Prophet was asked to predict 9 stores it had **never seen** — so it fell back to the global average (~$1M/week). Some of those stores only sell $300K/week, leading to errors of $700K+ per prediction.
 
 **The fix:** Apply the 80/20 split **within each store independently** — every store contributes both training and test weeks.
-
-```python
-# ❌ Wrong — accidentally trains on stores 1-36, tests on stores 37-45
-split = int(len(df) * 0.8)
-train = df.iloc[:split]
-test  = df.iloc[split:]
-
-# ✅ Correct — every store gets its own 80/20 chronological split
-train_list, test_list = [], []
-for store_id in sorted(df["Store"].unique()):
-    store_df = df[df["Store"] == store_id].sort_values("Date")
-    sp = int(len(store_df) * 0.8)
-    train_list.append(store_df.iloc[:sp])
-    test_list.append(store_df.iloc[sp:])
-
-train = pd.concat(train_list)
-test  = pd.concat(test_list)
-```
 
 ---
 
@@ -165,16 +147,6 @@ Every 1% improvement in MAPE translates to approximately **$1.8M in annual savin
 | `matplotlib` / `seaborn` | Visualisation |
 | `prophet` | Time-series forecasting |
 | `scikit-learn` | Evaluation metrics (MAE, RMSE) |
-
----
-
-## Recommendations
-
-1. **Deploy Prophet** as the operational forecasting baseline immediately.
-2. **Prioritise holiday-week accuracy** — these weeks drive the largest error spikes in naive models.
-3. **Penalise under-forecasting more** during model tuning (stockouts cost 2× more than overstocking).
-4. **Audit the bottom 10 stores** with consistently high forecast errors — they may need custom seasonality calibration.
-5. **Add economic regressors** (CPI, fuel price, unemployment) as external inputs to Prophet in the next iteration to push MAPE below 5%.
 
 ---
 
